@@ -9,6 +9,16 @@ import { buildEvents, exec, translateOptions } from './utils'
  * @property {boolean} [offsetTopBar=false] -
  * set to true to avoid ios7 status bar overlap
  * @property {string} [size=SMART_BANNER] - {@link BANNER_SIZE}
+ *
+ * TUNT
+ * Container width.
+ * @param {number} [options.containerWidth=0]
+ * * Container height.
+ * @param {number} [options.containerHeight=0]
+ * * Container top.
+ * @param {number} [options.containerTop=0]
+ * * Container left.
+ * @param {number} [options.containerLeft=0]
  */
 
 const events = buildEvents('banner', [
@@ -103,12 +113,23 @@ class Banner {
   }
 
   /**
+   * Move the banner on container area.
+   *
+   * @returns {Promise} Excutaion result promise.
+   */
+  move(adTop) {
+    // TUNT change
+    return exec('scrollAd', [adTop])
+  }
+
+  /**
    * Show the banner.
    *
    * @returns {Promise} Excutaion result promise.
    */
-  show() {
-    return exec('showAd', [true])
+  show(adTop) {
+    // TUNT change
+    return exec('showAd', [true, adTop])
   }
 
   /**

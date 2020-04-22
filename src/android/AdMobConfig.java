@@ -37,6 +37,14 @@ public class AdMobConfig {
     private static final String OPT_CONTENTURL = "contentUrl";
     private static final String OPT_EXCLUDE = "exclude";
 
+    /*
+    * TUNT
+    */
+    private static final String CONTAINER_WIDTH = "containerWidth";
+    private static final String CONTAINER_HEIGHT = "containerHeight";
+    private static final String CONTAINER_TOP = "containerTop";
+    private static final String CONTAINER_LEFT = "containerLeft";
+
     public boolean isTesting = false;
     public JSONObject adExtras = null;
 
@@ -50,6 +58,14 @@ public class AdMobConfig {
     public String forFamily = null;
     public String contentURL = null;
     public JSONArray exclude = null;
+
+    /*
+    * TUNT Custom Ad container width, height and position show in app
+    */
+    public int containerWidth = 0;
+    public int containerHeight = 0;
+    public int containerTop = 0;
+    public int containerLeft = 0;
 
     public List<String> testDeviceList = null;
 
@@ -153,6 +169,22 @@ public class AdMobConfig {
                     testDeviceList.add(testDevices.optString(i));
                 }
             }
+        }
+
+        /*
+        * TUNT
+        */
+        if (options.has(CONTAINER_WIDTH)) {
+            this.containerWidth = options.optInt(CONTAINER_WIDTH);
+        }
+        if (options.has(CONTAINER_HEIGHT)) {
+            this.containerHeight = options.optInt(CONTAINER_HEIGHT);
+        }
+        if (options.has(CONTAINER_TOP)) {
+            this.containerTop = options.optInt(CONTAINER_TOP);
+        }
+        if (options.has(CONTAINER_LEFT)) {
+            this.containerLeft = options.optInt(CONTAINER_LEFT);
         }
     }
 

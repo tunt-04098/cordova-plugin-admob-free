@@ -47,7 +47,7 @@ class BannerListener extends AdListener {
     public void onAdLoaded() {
         Log.w("AdMob", "BannerAdLoaded");
         if (executor.shouldAutoShow() && !executor.bannerVisible) {
-            executor.showAd(true, null);
+            executor.showAdAtPosition(true, null, null);
         }
         executor.fireAdEvent("admob.banner.events.LOAD");
         executor.fireAdEvent("onReceiveAd");

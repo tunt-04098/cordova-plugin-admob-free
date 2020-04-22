@@ -80,6 +80,7 @@ public class AdMob extends CordovaPlugin {
 
         if (Actions.SET_OPTIONS.equals(action)) {
             JSONObject options = inputs.optJSONObject(0);
+
             result = executeSetOptions(options, callbackContext);
 
         } else if (Actions.CREATE_BANNER.equals(action)) {
@@ -93,9 +94,17 @@ public class AdMob extends CordovaPlugin {
             JSONObject options = inputs.optJSONObject(0);
             result = bannerExecutor.requestAd(options, callbackContext);
 
+        } else if (Actions.SCROLL_AD.equals(action)) {
+            int adTop = inputs.optInt(0);
+            result = bannerExecutor.scrollAdTo(adTop, callbackContext);
+
         } else if (Actions.SHOW_AD.equals(action)) {
+            /*
+            * TUNT change
+             */
             boolean show = inputs.optBoolean(0);
-            result = bannerExecutor.showAd(show, callbackContext);
+            int adTop = inputs.optInt(1);
+            result = bannerExecutor.showAdAtPosition(show, adTop, callbackContext);
 
         } else if (Actions.PREPARE_INTERSTITIAL.equals(action)) {
             JSONObject options = inputs.optJSONObject(0);
@@ -113,7 +122,7 @@ public class AdMob extends CordovaPlugin {
             boolean show = inputs.optBoolean(0);
             result = interstitialExecutor.showAd(show, callbackContext);
 
-        } else if(Actions.IS_INTERSTITIAL_READY.equals(action)) {
+        } else if (Actions.IS_INTERSTITIAL_READY.equals(action)) {
             result = interstitialExecutor.isReady(callbackContext);
 
         } else if (Actions.CREATE_REWARD_VIDEO.equals(action)) {
@@ -124,7 +133,7 @@ public class AdMob extends CordovaPlugin {
             boolean show = inputs.optBoolean(0);
             result = rewardVideoExecutor.showAd(show, callbackContext);
 
-        } else if(Actions.IS_REWARD_VIDEO_READY.equals(action)) {
+        } else if (Actions.IS_REWARD_VIDEO_READY.equals(action)) {
             result = rewardVideoExecutor.isReady(callbackContext);
 
         } else {

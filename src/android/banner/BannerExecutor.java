@@ -1,8 +1,11 @@
 package name.ratson.cordova.admob.banner;
 
+import android.graphics.Color;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
@@ -20,6 +23,10 @@ import name.ratson.cordova.admob.AdMob;
 public class BannerExecutor extends AbstractExecutor {
     private static final String TAG = "BannerExecutor";
 
+    /**
+     * The adView to display to the user.
+     */
+    private RelativeLayout adContainer = null;
     /**
      * The adView to display to the user.
      */
@@ -72,9 +79,10 @@ public class BannerExecutor extends AbstractExecutor {
                     adView.setAdSize(plugin.config.adSize);
                     adView.setAdListener(new BannerListener(BannerExecutor.this));
                 }
-                if (adView.getParent() != null) {
-                    ((ViewGroup) adView.getParent()).removeView(adView);
-                }
+                removeAdView();
+//                if (getAdParent(adView) != null) {
+//                    ((ViewGroup) getAdParent(adView)).removeView(adView);
+//                }
 
                 bannerVisible = false;
                 adView.loadAd(plugin.buildAdRequest());
@@ -138,10 +146,11 @@ public class BannerExecutor extends AbstractExecutor {
             @Override
             public void run() {
                 if (adView != null) {
-                    ViewGroup parentView = (ViewGroup) adView.getParent();
-                    if (parentView != null) {
-                        parentView.removeView(adView);
-                    }
+                    removeAdView();
+//                    ViewGroup parentView = (ViewGroup) getAdParent(adView);
+//                    if (parentView != null) {
+//                        parentView.removeView(adView);
+//                    }
                     adView.destroy();
                     adView = null;
                 }
@@ -184,9 +193,10 @@ public class BannerExecutor extends AbstractExecutor {
                     // no change
                 } else if (bannerShow) {
                     CordovaWebView webView = plugin.webView;
-                    if (adView.getParent() != null) {
-                        ((ViewGroup) adView.getParent()).removeView(adView);
-                    }
+                    removeAdView();
+//                    if (getAdParent(adView) != null) {
+//                        ((ViewGroup) getAdParent(adView)).removeView(adView);
+//                    }
                     if (plugin.config.bannerOverlap) {
                         RelativeLayout.LayoutParams params2 = new RelativeLayout.LayoutParams(
                                 RelativeLayout.LayoutParams.MATCH_PARENT,
@@ -211,7 +221,7 @@ public class BannerExecutor extends AbstractExecutor {
                             parentView = new LinearLayout(webView.getContext());
                         }
                         if (wvParentView != null && wvParentView != parentView) {
-                            ViewGroup rootView = (ViewGroup)(getWebView().getParent());
+                            ViewGroup rootView = (ViewGroup) (getWebView().getParent());
                             wvParentView.removeView(getWebView());
                             ((LinearLayout) parentView).setOrientation(LinearLayout.VERTICAL);
                             parentView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 0.0F));
@@ -236,6 +246,163 @@ public class BannerExecutor extends AbstractExecutor {
 
                 } else {
                     adView.setVisibility(View.GONE);
+                    bannerVisible = false;
+                }
+
+                if (callbackContext != null) {
+                    callbackContext.success();
+                }
+            }
+        });
+
+        return null;
+    }
+
+    public PluginResult scrollAdTo(final int adTop, final CallbackContext callbackContext) {
+        Log.e("AD_BANNER", "scrollAdTo " + adTop);
+        CordovaInterface cordova = plugin.cordova;
+
+        if (adView == null) {
+            return new PluginResult(PluginResult.Status.ERROR, "adView is null, call createBannerView first.");
+        }
+
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (adView == null || !bannerShow) {
+                    return;
+                }
+                RelativeLayout.LayoutParams adParams = (RelativeLayout.LayoutParams) adView.getLayoutParams();
+                adParams.topMargin = adTop;
+                adView.setLayoutParams(adParams);
+
+                if (callbackContext != null) {
+                    callbackContext.success();
+                }
+            }
+        });
+
+        return null;
+    }
+
+    /**
+     * Parses the show ad input parameters and runs the show ad action on
+     * the UI thread.
+     *
+     * @param show The JSONArray representing input parameters.  This function
+     *             expects the first object in the array to be a JSONObject with the
+     *             input parameters.
+     * @return A PluginResult representing whether or not an ad was requested
+     * succcessfully.  Listen for onReceiveAd() and onFailedToReceiveAd()
+     * callbacks to see if an ad was successfully retrieved.
+     */
+    public PluginResult showAdAtPosition(final boolean show, final Integer adTop, final CallbackContext callbackContext) {
+        Log.e("AD_BANNER", "showAdAtPosition " + show + " | " + adTop);
+        CordovaInterface cordova = plugin.cordova;
+        bannerShow = show;
+
+        if (adView == null) {
+            return new PluginResult(PluginResult.Status.ERROR, "adView is null, call createBannerView first.");
+        }
+
+
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (adView == null) {
+                    return;
+                }
+
+                DisplayMetrics metrics = plugin.webView.getContext().getResources().getDisplayMetrics();
+
+
+                CordovaInterface cordova = plugin.cordova;
+                if (bannerVisible == bannerShow) {
+                    // no change
+                } else if (bannerShow) {
+                    CordovaWebView webView = plugin.webView;
+                    removeAdView();
+//                    if (getAdParent(adView) != null) {
+//                        ((ViewGroup) getAdParent(adView)).removeView(adView);
+//                    }
+                    plugin.config.bannerOverlap = true;
+                    if (plugin.config.bannerOverlap) {
+                        int containerWidth = (int) (plugin.config.containerWidth * metrics.density);
+                        int containerHeight = (int) (plugin.config.containerHeight * metrics.density);
+                        int leftMargin = (int) (plugin.config.containerLeft * metrics.density);
+                        int topMargin = (int) (plugin.config.containerTop * metrics.density);
+                        int adMarginTop = adTop != null ? (int) (adTop * metrics.density) : containerHeight; //(int) (plugin.config.containerTop * metrics.density);
+
+                        Log.e("AD_BANNER", "bannerOverlap");
+                        RelativeLayout.LayoutParams adContainerParams = new RelativeLayout.LayoutParams(
+                                RelativeLayout.LayoutParams.MATCH_PARENT,
+                                RelativeLayout.LayoutParams.MATCH_PARENT);
+                        adContainerParams.width = containerWidth;//(int) (plugin.config.containerWidth * metrics.density);
+                        adContainerParams.height = containerHeight;
+                        adContainerParams.setMargins(leftMargin, topMargin, 0, 0);
+
+                        if (adViewLayout == null) {
+                            adViewLayout = new RelativeLayout(cordova.getActivity());
+                            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+                                    RelativeLayout.LayoutParams.MATCH_PARENT,
+                                    RelativeLayout.LayoutParams.MATCH_PARENT);
+                            try {
+                                ((ViewGroup) (((View) webView.getClass().getMethod("getView").invoke(webView)).getParent()))
+                                        .addView(adViewLayout, params);
+                            } catch (Exception e) {
+                                ((ViewGroup) webView).addView(adViewLayout, params);
+                            }
+                        }
+                        if (adContainer == null) {
+                            adContainer = new RelativeLayout(cordova.getActivity());
+                            RelativeLayout.LayoutParams adParams = new RelativeLayout.LayoutParams(
+                                    RelativeLayout.LayoutParams.MATCH_PARENT,
+                                    RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+                            adContainer.addView(adView, adParams);
+                        }
+
+                        // TUNT change
+                        RelativeLayout.LayoutParams adParams = (RelativeLayout.LayoutParams) adView.getLayoutParams();
+                        adParams.topMargin = adMarginTop;
+                        adView.setLayoutParams(adParams);
+
+                        adViewLayout.addView(adContainer, adContainerParams);
+                        adViewLayout.bringToFront();
+                    } else {
+                        Log.e("AD_BANNER", "bannerNotOverlap");
+                        ViewGroup wvParentView = (ViewGroup) getWebView().getParent();
+                        if (parentView == null) {
+                            parentView = new LinearLayout(webView.getContext());
+                        }
+                        if (wvParentView != null && wvParentView != parentView) {
+                            ViewGroup rootView = (ViewGroup) (getWebView().getParent());
+                            wvParentView.removeView(getWebView());
+                            ((LinearLayout) parentView).setOrientation(LinearLayout.VERTICAL);
+                            parentView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 0.0F));
+                            getWebView().setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1.0F));
+                            parentView.addView(getWebView());
+                            rootView.addView(parentView);
+                        }
+
+
+                        if (plugin.config.bannerAtTop) {
+                            parentView.addView(adView, 0);
+                        } else {
+                            parentView.addView(adView);
+                        }
+                        parentView.bringToFront();
+                        parentView.requestLayout();
+                        parentView.requestFocus();
+                    }
+
+                    adView.setVisibility(View.VISIBLE);
+                    adContainer.setVisibility(View.VISIBLE);
+                    bannerVisible = true;
+
+                } else {
+                    adView.setVisibility(View.GONE);
+                    adContainer.setVisibility(View.GONE);
                     bannerVisible = false;
                 }
 
@@ -286,5 +453,19 @@ public class BannerExecutor extends AbstractExecutor {
 
     boolean shouldAutoShow() {
         return plugin.config.autoShowBanner;
+    }
+
+    ViewParent getAdParent() {
+        if (adView.getParent() != null) {
+            return adView.getParent().getParent();
+        }
+        return null;
+    }
+
+//    void removeAdView(AdView adView) {
+    void removeAdView() {
+        if (getAdParent() != null) {
+            ((ViewGroup) getAdParent()).removeView(adContainer);
+        }
     }
 }
