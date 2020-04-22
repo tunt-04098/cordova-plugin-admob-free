@@ -109,6 +109,16 @@ export const rewardvideo = new RewardVideo()
  * Set to "true" for `setIsDesignedForFamilies(true)`.
  * Set to "false" for `setIsDesignedForFamilies(false)`.
  *
+ * TUNT
+ * Container width.
+ * @param {number} [options.containerWidth=0]
+ * * Container height.
+ * @param {number} [options.containerHeight=0]
+ * * Container top.
+ * @param {number} [options.containerTop=0]
+ * * Container left.
+ * @param {number} [options.containerLeft=0]
+ *
  * @param {function()} [successCallback]
  * @param {function()} [failureCallback]
  */
@@ -135,6 +145,15 @@ export function setOptions(options, successCallback, failureCallback) {
           banner._config[k] = options[k]
           interstitial._config[k] = options[k]
           rewardvideo._config[k] = options[k]
+          break
+        /*
+        * TUNT
+        */
+        case 'containerWidth':
+        case 'containerHeight':
+        case 'containerTop':
+        case 'containerLeft':
+          banner._config[k] = options[k]
           break
         default:
       }
@@ -181,9 +200,19 @@ export function destroyBannerView(options, successCallback, failureCallback) {
 /**
  * @deprecated since version 0.6
  */
-export function showAd(show = true, successCallback, failureCallback) {
+export function showAd(show = true, adTop, successCallback, failureCallback) {
+  // TUNT change
   console.warn('Use admob.banner.show() and admob.banner.hide() instead.')
-  exec(successCallback, failureCallback, 'AdMob', 'showAd', [show])
+  exec(successCallback, failureCallback, 'AdMob', 'showAd', [show, adTop])
+}
+
+/**
+ * @deprecated since version 0.6
+ */
+export function scrollAd(adTop, successCallback, failureCallback) {
+  // TUNT change
+  console.warn('Move admob.banner up and down')
+  exec(successCallback, failureCallback, 'AdMob', 'scrollAd', [adTop])
 }
 
 /**
