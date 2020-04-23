@@ -9,7 +9,9 @@
 
 - (void) __setOptions:(NSDictionary*) options;
 - (void) __createBanner;
+- (void) __createBannerWithAdTop:(int)adTop;
 - (void) __showAd:(BOOL)show;
+- (void) __showAd:(BOOL)show withAdTop:(int)adTop;
 - (BOOL) __showInterstitial:(BOOL)show;
 - (void) __showRewardedVideo:(BOOL)show;
 - (GADRequest*) __buildAdRequest;
@@ -17,6 +19,7 @@
 - (NSString *) __getAdMobDeviceId;
 
 - (void)resizeViews;
+- (void)resizeViewsWithAdTop:(int)adTop;
 
 - (GADAdSize)__AdSizeFromString:(NSString *)string;
 
@@ -28,6 +31,7 @@
 @implementation CDVAdMob
 
 @synthesize bannerView = bannerView_;
+@synthesize adContainerView = adContainerView_;
 @synthesize interstitialView = interstitialView_;
 @synthesize rewardVideoView = rewardVideoView_;
 
@@ -42,6 +46,8 @@
 @synthesize gender, forChild;
 
 @synthesize rewardedVideoLock, isRewardedVideoLoading;
+
+@synthesize containerWidth, containerHeight, containerTop, containerLeft;
 
 #define DEFAULT_BANNER_ID    @"ca-app-pub-3940256099942544/2934735716"
 #define DEFAULT_INTERSTITIAL_ID @"ca-app-pub-3940256099942544/4411468910"
@@ -60,6 +66,12 @@
 
 #define OPT_GENDER          @"gender"
 #define OPT_FORCHILD        @"forChild"
+
+#define CONTAINER_WIDTH   @"containerWidth"
+#define CONTAINER_HEIGHT   @"containerHeight"
+#define CONTAINER_TOP   @"containerTop"
+#define CONTAINER_LEFT   @"containerLeft"
+
 
 #pragma mark Cordova JS bridge
 
@@ -84,7 +96,7 @@
     adSize = [self __AdSizeFromString:@"SMART_BANNER"];
 
     bannerAtTop = false;
-    bannerOverlap = false;
+    bannerOverlap = true;
     offsetTopBar = false;
     isTesting = false;
 
@@ -168,6 +180,9 @@
         [self.bannerView removeFromSuperview];
         self.bannerView = nil;
 
+        [self.adContainerView removeFromSuperview];
+        self.bannerView = nil;
+
         [self resizeViews];
     }
 
@@ -219,17 +234,23 @@
 }
 
 - (void)showAd:(CDVInvokedUrlCommand *)command {
-    NSLog(@"showAd");
+    NSLog(@"showAdAtPosition");
 
     CDVPluginResult *pluginResult;
     NSString *callbackId = command.callbackId;
     NSArray* arguments = command.arguments;
 
     BOOL show = YES;
+    int adTop = 0;
     NSUInteger argc = [arguments count];
     if (argc >= 1) {
         NSString* showValue = [arguments objectAtIndex:0];
         show = showValue ? [showValue boolValue] : YES;
+    }
+
+    if (argc >= 2) {
+        NSString* adTopValue = [arguments objectAtIndex:1];
+        adTop = adTopValue ? [adTopValue intValue] : 0;
     }
 
     bannerShow = show;
@@ -238,11 +259,31 @@
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"adView is null, call createBannerView first."];
 
     } else {
-        [self __showAd:show];
+        [self __showAd:show withAdTop:adTop];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
 
     }
 
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+}
+
+- (void)scrollAd:(CDVInvokedUrlCommand *)command {
+    NSLog(@"scrollAd");
+
+    CDVPluginResult *pluginResult;
+    NSString *callbackId = command.callbackId;
+    NSArray* arguments = command.arguments;
+
+    int adTop = 0;
+    NSUInteger argc = [arguments count];
+    if (argc >= 1) {
+        NSString* adTopValue = [arguments objectAtIndex:0];
+        adTop = adTopValue ? [adTopValue intValue] : 0;
+    }
+
+    [self resizeViewsWithAdTop:adTop];
+
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
 
@@ -488,10 +529,10 @@
         bannerAtTop = [str boolValue];
     }
 
-    str = [options objectForKey:OPT_OVERLAP];
-    if (str) {
-        bannerOverlap = [str boolValue];
-    }
+    // str = [options objectForKey:OPT_OVERLAP];
+    // if (str) {
+    //     bannerOverlap = [str boolValue];
+    // }
 
     str = [options objectForKey:OPT_OFFSET_TOPBAR];
     if (str) {
@@ -523,6 +564,26 @@
     } else if (str && [str length] == 0) {
         forChild = nil;
     }
+
+    str = [options objectForKey:CONTAINER_WIDTH];
+    if (str) {
+        containerWidth = [str intValue];
+    }
+
+    str = [options objectForKey:CONTAINER_HEIGHT];
+    if (str) {
+        containerHeight = [str intValue];
+    }
+
+    str = [options objectForKey:CONTAINER_TOP];
+    if (str) {
+        containerTop = [str intValue];
+    }
+
+    str = [options objectForKey:CONTAINER_LEFT];
+    if (str) {
+        containerLeft = [str intValue];
+    }
 }
 
 - (void) __createBanner {
@@ -541,7 +602,45 @@
         self.bannerIsInitialized = YES;
         self.bannerIsVisible = NO;
 
+        CGRect rect = CGRectMake((float) containerLeft, (float) containerTop, (float) containerWidth, (float) containerHeight);
+        self.adContainerView = [[UIView alloc] initWithFrame:rect];
+        self.adContainerView.backgroundColor = [[UIColor alloc] initWithRed:1.0 green:0 blue:0 alpha:0.5];
+        [self.adContainerView setClipsToBounds:YES];
+        [self.adContainerView setUserInteractionEnabled:NO];
+
+        [self.adContainerView addSubview:self.bannerView];
+
         [self resizeViews];
+
+        [self.bannerView loadRequest:[self __buildAdRequest]];
+    }
+}
+
+- (void) __createBannerWithAdTop:(int)adTop {
+    NSLog(@"__createBannerWithAdTop");
+
+    // set background color to black
+    //self.webView.superview.backgroundColor = [UIColor blackColor];
+    //self.webView.superview.tintColor = [UIColor whiteColor];
+
+    if (!self.bannerView){
+        self.bannerView = [[GADBannerView alloc] initWithAdSize:adSize];
+        self.bannerView.adUnitID = [self publisherId];
+        self.bannerView.delegate = self;
+        self.bannerView.rootViewController = self.viewController;
+
+        self.bannerIsInitialized = YES;
+        self.bannerIsVisible = NO;
+
+        CGRect rect = CGRectMake((float) containerLeft, (float) containerTop, (float) containerWidth, (float) containerHeight);
+        self.adContainerView = [[UIView alloc] initWithFrame:rect];
+        [self.adContainerView setClipsToBounds:YES];
+        self.adContainerView.backgroundColor = [[UIColor alloc] initWithRed:1.0 green:0 blue:0 alpha:0.5];
+        [self.adContainerView setUserInteractionEnabled:NO];
+
+        [self.adContainerView addSubview:self.bannerView];
+
+        [self resizeViewsWithAdTop:adTop];
 
         [self.bannerView loadRequest:[self __buildAdRequest]];
     }
@@ -585,29 +684,32 @@
 
     return request;
 }
-
 - (void) __showAd:(BOOL)show {
+//    [self __showAd:show withAdTop:0];
+}
+
+- (void) __showAd:(BOOL)show withAdTop:(int)adTop {
     //NSLog(@"Show Ad: %d", show);
 
     if (!self.bannerIsInitialized){
-        [self __createBanner];
+        [self __createBannerWithAdTop:adTop];
     }
 
     if (show == self.bannerIsVisible) { // same state, nothing to do
         //NSLog(@"already show: %d", show);
-        [self resizeViews];
+        [self resizeViewsWithAdTop:adTop];
     } else if (show) {
         //NSLog(@"show now: %d", show);
 
         UIView* parentView = self.bannerOverlap ? self.webView : [self.webView superview];
-        [parentView addSubview:self.bannerView];
-        [parentView bringSubviewToFront:self.bannerView];
-        [self resizeViews];
+        [parentView addSubview:self.adContainerView];
+        [parentView bringSubviewToFront:self.adContainerView];
+        [self resizeViewsWithAdTop:adTop];
 
         self.bannerIsVisible = YES;
     } else {
-        [self.bannerView removeFromSuperview];
-        [self resizeViews];
+        [self.adContainerView removeFromSuperview];
+        [self resizeViewsWithAdTop:adTop];
 
         self.bannerIsVisible = NO;
     }
@@ -685,6 +787,10 @@
 }
 
 - (void)resizeViews {
+    [self resizeViewsWithAdTop:0];
+}
+
+- (void)resizeViewsWithAdTop:(int)adTop {
     // Frame of the main container view that holds the Cordova webview.
     CGRect pr = self.webView.superview.bounds, wf = pr;
     //NSLog(@"super view: %d x %d", (int)pr.size.width, (int)pr.size.height);
@@ -694,6 +800,7 @@
     //CGRect sf = [[UIApplication sharedApplication] statusBarFrame];
     //CGFloat top = isIOS7 ? MIN(sf.size.height, sf.size.width) : 0.0;
     float top = 0.0;
+    float fAdTop = (float) adTop;
 
     //if(! self.offsetTopBar) top = 0.0;
 
@@ -712,83 +819,87 @@
         }
 
         CGRect bf = self.bannerView.frame;
+        CGRect cf = self.adContainerView.frame;
 
         // If the ad is not showing or the ad is hidden, we don't want to resize anything.
         UIView* parentView = self.bannerOverlap ? self.webView : [self.webView superview];
-        BOOL adIsShowing = ([self.bannerView isDescendantOfView:parentView]) && (! self.bannerView.hidden);
+        BOOL adIsShowing = ([self.adContainerView isDescendantOfView:parentView]) && (! self.adContainerView.hidden);
 
         if( adIsShowing ) {
             //NSLog( @"banner visible" );
-            if( bannerAtTop ) {
-                if(bannerOverlap) {
-                    wf.origin.y = top;
-                    bf.origin.y = 0; // banner is subview of webview
+//            if( bannerAtTop ) {
+//                if(bannerOverlap) {
+//                    wf.origin.y = top;
+//                    bf.origin.y = 0; // banner is subview of webview
+//
+//                    if (@available(iOS 11.0, *)) {
+//                        bf.origin.y = parentView.safeAreaInsets.top;
+//                        bf.size.width = wf.size.width - parentView.safeAreaInsets.left - parentView.safeAreaInsets.right;
+//                    }
+//                } else {
+//                    bf.origin.y = top;
+//                    wf.origin.y = bf.origin.y + bf.size.height;
+//
+//                    if (@available(iOS 11.0, *)) {
+//                        bf.origin.y += parentView.safeAreaInsets.top;
+//                        wf.origin.y += parentView.safeAreaInsets.top;
+//                        bf.size.width = wf.size.width - parentView.safeAreaInsets.left - parentView.safeAreaInsets.right;
+//                        wf.size.height -= parentView.safeAreaInsets.top;
+//
+//                        //If safeAreBackground was turned turned off, turn it back on
+//                        _safeAreaBackgroundView.hidden = false;
+//
+//                        CGRect saf = _safeAreaBackgroundView.frame;
+//                        saf.origin.y = top;
+//                        saf.size.width = pr.size.width;
+//                        saf.size.height = parentView.safeAreaInsets.top;
+//
+//                        _safeAreaBackgroundView.frame = saf;
+//                        _safeAreaBackgroundView.bounds = saf;
+//                    }
+//                }
+//
+//            } else {
+//                // move webview to top
+//                wf.origin.y = top;
+//
+//                if( bannerOverlap ) {
+//                    bf.origin.y = wf.size.height - bf.size.height; // banner is subview of webview
+//
+//                    if (@available(iOS 11.0, *)) {
+//                        bf.origin.y -= parentView.safeAreaInsets.bottom;
+//                        bf.size.width = wf.size.width - parentView.safeAreaInsets.left - parentView.safeAreaInsets.right;
+//                    }
+//                } else {
+//                    bf.origin.y = pr.size.height - bf.size.height;
+//
+//                    if (@available(iOS 11.0, *)) {
+//                        bf.origin.y -= parentView.safeAreaInsets.bottom;
+//                        bf.size.width = wf.size.width - parentView.safeAreaInsets.left - parentView.safeAreaInsets.right;
+//                        wf.size.height -= parentView.safeAreaInsets.bottom;
+//
+//                        //If safeAreBackground was turned turned off, turn it back on
+//                        _safeAreaBackgroundView.hidden = false;
+//
+//                        CGRect saf = _safeAreaBackgroundView.frame;
+//                        saf.origin.y = pr.size.height - parentView.safeAreaInsets.bottom;
+//                        saf.size.width = pr.size.width;
+//                        saf.size.height = parentView.safeAreaInsets.bottom;
+//
+//                        _safeAreaBackgroundView.frame = saf;
+//                        _safeAreaBackgroundView.bounds = saf;
+//                    }
+//                }
+//            }
+//
+//            if(! bannerOverlap) wf.size.height -= bf.size.height;
 
-                    if (@available(iOS 11.0, *)) {
-                        bf.origin.y = parentView.safeAreaInsets.top;
-                        bf.size.width = wf.size.width - parentView.safeAreaInsets.left - parentView.safeAreaInsets.right;
-                    }
-                } else {
-                    bf.origin.y = top;
-                    wf.origin.y = bf.origin.y + bf.size.height;
 
-                    if (@available(iOS 11.0, *)) {
-                        bf.origin.y += parentView.safeAreaInsets.top;
-                        wf.origin.y += parentView.safeAreaInsets.top;
-                        bf.size.width = wf.size.width - parentView.safeAreaInsets.left - parentView.safeAreaInsets.right;
-                        wf.size.height -= parentView.safeAreaInsets.top;
-
-                        //If safeAreBackground was turned turned off, turn it back on
-                        _safeAreaBackgroundView.hidden = false;
-
-                        CGRect saf = _safeAreaBackgroundView.frame;
-                        saf.origin.y = top;
-                        saf.size.width = pr.size.width;
-                        saf.size.height = parentView.safeAreaInsets.top;
-
-                        _safeAreaBackgroundView.frame = saf;
-                        _safeAreaBackgroundView.bounds = saf;
-                    }
-                }
-
-            } else {
-                // move webview to top
-                wf.origin.y = top;
-
-                if( bannerOverlap ) {
-                    bf.origin.y = wf.size.height - bf.size.height; // banner is subview of webview
-
-                    if (@available(iOS 11.0, *)) {
-                        bf.origin.y -= parentView.safeAreaInsets.bottom;
-                        bf.size.width = wf.size.width - parentView.safeAreaInsets.left - parentView.safeAreaInsets.right;
-                    }
-                } else {
-                    bf.origin.y = pr.size.height - bf.size.height;
-
-                    if (@available(iOS 11.0, *)) {
-                        bf.origin.y -= parentView.safeAreaInsets.bottom;
-                        bf.size.width = wf.size.width - parentView.safeAreaInsets.left - parentView.safeAreaInsets.right;
-                        wf.size.height -= parentView.safeAreaInsets.bottom;
-
-                        //If safeAreBackground was turned turned off, turn it back on
-                        _safeAreaBackgroundView.hidden = false;
-
-                        CGRect saf = _safeAreaBackgroundView.frame;
-                        saf.origin.y = pr.size.height - parentView.safeAreaInsets.bottom;
-                        saf.size.width = pr.size.width;
-                        saf.size.height = parentView.safeAreaInsets.bottom;
-
-                        _safeAreaBackgroundView.frame = saf;
-                        _safeAreaBackgroundView.bounds = saf;
-                    }
-                }
-            }
-
-            if(! bannerOverlap) wf.size.height -= bf.size.height;
-
-            bf.origin.x = (pr.size.width - bf.size.width) * 0.5f;
+            bf.origin.y = fAdTop;
+            bf.origin.x = (cf.size.width - bf.size.width) * 0.5f;
 
             self.bannerView.frame = bf;
+
 
             //NSLog(@"x,y,w,h = %d,%d,%d,%d", (int) bf.origin.x, (int) bf.origin.y, (int) bf.size.width, (int) bf.size.height );
         } else {
@@ -961,12 +1072,14 @@
 
     bannerView_.delegate = nil;
     bannerView_ = nil;
+    adContainerView_ = nil;
     interstitialView_.delegate = nil;
     interstitialView_ = nil;
     rewardVideoView_.delegate = nil;
     rewardVideoView_ =  nil;
 
     self.bannerView = nil;
+    self.adContainerView = nil;
     self.interstitialView = nil;
     self.rewardVideoView = nil;
 }

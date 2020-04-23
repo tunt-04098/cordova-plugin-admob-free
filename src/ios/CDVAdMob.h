@@ -30,6 +30,7 @@
 }
 
 @property(nonatomic, retain) GADBannerView *bannerView;
+@property(nonatomic, retain) UIView *adContainerView;
 @property(nonatomic, retain) GADInterstitial *interstitialView;
 @property(nonatomic, retain) GADRewardBasedVideoAd *rewardVideoView;
 
@@ -60,12 +61,19 @@
 @property (nonatomic, retain) NSString* gender;
 @property (nonatomic, retain) NSString* forChild;
 
+
+@property (assign) int containerWidth;
+@property (assign) int containerHeight;
+@property (assign) int containerTop;
+@property (assign) int containerLeft;
+
 - (void) setOptions:(CDVInvokedUrlCommand *)command;
 
 - (void)createBannerView:(CDVInvokedUrlCommand *)command;
 - (void)destroyBannerView:(CDVInvokedUrlCommand *)command;
 - (void)requestAd:(CDVInvokedUrlCommand *)command;
 - (void)showAd:(CDVInvokedUrlCommand *)command;
+- (void)scrollAd:(CDVInvokedUrlCommand *)command;
 
 - (void)createInterstitialView:(CDVInvokedUrlCommand *)command;
 - (void)requestInterstitialAd:(CDVInvokedUrlCommand *)command;
