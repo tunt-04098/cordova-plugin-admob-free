@@ -47,7 +47,7 @@
 
 @synthesize rewardedVideoLock, isRewardedVideoLoading;
 
-@synthesize containerWidth, containerHeight, containerTop, containerLeft;
+@synthesize containerWidth, containerHeight, containerTop, containerLeft, adWidth, adHeight;
 
 #define DEFAULT_BANNER_ID    @"ca-app-pub-3940256099942544/2934735716"
 #define DEFAULT_INTERSTITIAL_ID @"ca-app-pub-3940256099942544/4411468910"
@@ -71,6 +71,8 @@
 #define CONTAINER_HEIGHT   @"containerHeight"
 #define CONTAINER_TOP   @"containerTop"
 #define CONTAINER_LEFT   @"containerLeft"
+#define AD_WIDTH   @"adWidth"
+#define AD_HEIGHT   @"adHeight"
 
 
 #pragma mark Cordova JS bridge
@@ -583,6 +585,16 @@
     str = [options objectForKey:CONTAINER_LEFT];
     if (str) {
         containerLeft = [str intValue];
+    }
+
+    str = [options objectForKey:AD_WIDTH];
+    if (str) {
+        adWidth = [str intValue];
+    }
+
+    str = [options objectForKey:AD_HEIGHT];
+    if (str) {
+        adHeight = [str intValue];
     }
 }
 

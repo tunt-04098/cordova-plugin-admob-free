@@ -44,6 +44,8 @@ public class AdMobConfig {
     private static final String CONTAINER_HEIGHT = "containerHeight";
     private static final String CONTAINER_TOP = "containerTop";
     private static final String CONTAINER_LEFT = "containerLeft";
+    private static final String AD_WIDTH = "adWidth";
+    private static final String AD_HEIGHT = "adHeight";
 
     public boolean isTesting = false;
     public JSONObject adExtras = null;
@@ -66,6 +68,8 @@ public class AdMobConfig {
     public int containerHeight = 0;
     public int containerTop = 0;
     public int containerLeft = 0;
+    public int adWidth = 0;
+    public int adHeight = 0;
 
     public List<String> testDeviceList = null;
 
@@ -185,6 +189,12 @@ public class AdMobConfig {
         }
         if (options.has(CONTAINER_LEFT)) {
             this.containerLeft = options.optInt(CONTAINER_LEFT);
+        }
+        if (options.has(AD_WIDTH)) {
+            this.adWidth = options.optInt(AD_WIDTH);
+        }
+        if (options.has(AD_HEIGHT)) {
+            this.adHeight = options.optInt(AD_HEIGHT);
         }
     }
 

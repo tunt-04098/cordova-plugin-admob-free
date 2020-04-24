@@ -66,6 +66,8 @@
 @property (assign) int containerHeight;
 @property (assign) int containerTop;
 @property (assign) int containerLeft;
+@property (assign) int adWidth;
+@property (assign) int adHeight;
 
 - (void) setOptions:(CDVInvokedUrlCommand *)command;
 

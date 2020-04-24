@@ -118,6 +118,10 @@ export const rewardvideo = new RewardVideo()
  * @param {number} [options.containerTop=0]
  * * Container left.
  * @param {number} [options.containerLeft=0]
+ * * AD width.
+ * @param {number} [options.adWidth=0]
+ * * Ad Height.
+ * @param {number} [options.adHeight=0]
  *
  * @param {function()} [successCallback]
  * @param {function()} [failureCallback]
@@ -153,6 +157,8 @@ export function setOptions(options, successCallback, failureCallback) {
         case 'containerHeight':
         case 'containerTop':
         case 'containerLeft':
+        case 'adWidth':
+        case 'adHeight':
           banner._config[k] = options[k]
           break
         default:

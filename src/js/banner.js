@@ -19,6 +19,10 @@ import { buildEvents, exec, translateOptions } from './utils'
  * @param {number} [options.containerTop=0]
  * * Container left.
  * @param {number} [options.containerLeft=0]
+ * * AD width.
+ * @param {number} [options.adWidth=0]
+ * * AD height.
+ * @param {number} [options.adHeight=0]
  */
 
 const events = buildEvents('banner', [
