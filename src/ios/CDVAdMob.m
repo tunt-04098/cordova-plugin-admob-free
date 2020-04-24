@@ -606,7 +606,9 @@
     //self.webView.superview.tintColor = [UIColor whiteColor];
 
     if (!self.bannerView){
-        self.bannerView = [[GADBannerView alloc] initWithAdSize:adSize];
+//        self.bannerView = [[GADBannerView alloc] initWithAdSize:adSize];
+        CGRect adRect = CGRectMake(0.0, 0.0, (float) adWidth, (float) adHeight);
+        self.bannerView = [[GADBannerView alloc] initWithFrame:adRect];
         self.bannerView.adUnitID = [self publisherId];
         self.bannerView.delegate = self;
         self.bannerView.rootViewController = self.viewController;
@@ -616,7 +618,7 @@
 
         CGRect rect = CGRectMake((float) containerLeft, (float) containerTop, (float) containerWidth, (float) containerHeight);
         self.adContainerView = [[UIView alloc] initWithFrame:rect];
-        self.adContainerView.backgroundColor = [[UIColor alloc] initWithRed:1.0 green:0 blue:0 alpha:0.5];
+//        self.adContainerView.backgroundColor = [[UIColor alloc] initWithRed:1.0 green:0 blue:0 alpha:0.5];
         [self.adContainerView setClipsToBounds:YES];
         [self.adContainerView setUserInteractionEnabled:NO];
 
@@ -636,7 +638,9 @@
     //self.webView.superview.tintColor = [UIColor whiteColor];
 
     if (!self.bannerView){
-        self.bannerView = [[GADBannerView alloc] initWithAdSize:adSize];
+//        self.bannerView = [[GADBannerView alloc] initWithAdSize:adSize];
+        CGRect adRect = CGRectMake(0.0, 0.0, (float) adWidth, (float) adHeight);
+        self.bannerView = [[GADBannerView alloc] initWithFrame:adRect];
         self.bannerView.adUnitID = [self publisherId];
         self.bannerView.delegate = self;
         self.bannerView.rootViewController = self.viewController;
@@ -647,7 +651,7 @@
         CGRect rect = CGRectMake((float) containerLeft, (float) containerTop, (float) containerWidth, (float) containerHeight);
         self.adContainerView = [[UIView alloc] initWithFrame:rect];
         [self.adContainerView setClipsToBounds:YES];
-        self.adContainerView.backgroundColor = [[UIColor alloc] initWithRed:1.0 green:0 blue:0 alpha:0.5];
+//        self.adContainerView.backgroundColor = [[UIColor alloc] initWithRed:1.0 green:0 blue:0 alpha:0.5];
         [self.adContainerView setUserInteractionEnabled:NO];
 
         [self.adContainerView addSubview:self.bannerView];
@@ -798,8 +802,10 @@
     }
 }
 
+float fAdTop = 0;
+
 - (void)resizeViews {
-    [self resizeViewsWithAdTop:0];
+    [self resizeViewsWithAdTop:fAdTop];
 }
 
 - (void)resizeViewsWithAdTop:(int)adTop {
@@ -812,7 +818,7 @@
     //CGRect sf = [[UIApplication sharedApplication] statusBarFrame];
     //CGFloat top = isIOS7 ? MIN(sf.size.height, sf.size.width) : 0.0;
     float top = 0.0;
-    float fAdTop = (float) adTop;
+    fAdTop = (float) adTop;
 
     //if(! self.offsetTopBar) top = 0.0;
 

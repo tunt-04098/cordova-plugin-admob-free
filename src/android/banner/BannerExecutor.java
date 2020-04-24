@@ -272,8 +272,10 @@ public class BannerExecutor extends AbstractExecutor {
                 if (adView == null || !bannerShow) {
                     return;
                 }
+                DisplayMetrics metrics = plugin.webView.getContext().getResources().getDisplayMetrics();
                 RelativeLayout.LayoutParams adParams = (RelativeLayout.LayoutParams) adView.getLayoutParams();
-                adParams.topMargin = adTop;
+                int adMarginTop = adTop * metrics.density;
+                adParams.topMargin = adMarginTop;
                 adView.setLayoutParams(adParams);
 
                 if (callbackContext != null) {
@@ -314,7 +316,6 @@ public class BannerExecutor extends AbstractExecutor {
                 }
 
                 DisplayMetrics metrics = plugin.webView.getContext().getResources().getDisplayMetrics();
-
 
                 CordovaInterface cordova = plugin.cordova;
                 if (bannerVisible == bannerShow) {
