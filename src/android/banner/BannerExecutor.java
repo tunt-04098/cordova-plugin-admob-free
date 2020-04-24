@@ -274,7 +274,7 @@ public class BannerExecutor extends AbstractExecutor {
                 }
                 DisplayMetrics metrics = plugin.webView.getContext().getResources().getDisplayMetrics();
                 RelativeLayout.LayoutParams adParams = (RelativeLayout.LayoutParams) adView.getLayoutParams();
-                int adMarginTop = adTop * metrics.density;
+                int adMarginTop = (int)(adTop * metrics.density);
                 adParams.topMargin = adMarginTop;
                 adView.setLayoutParams(adParams);
 
